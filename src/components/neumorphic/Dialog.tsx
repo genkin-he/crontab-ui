@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import React from 'react';
 
 const DialogOverlay = styled.div`
   position: fixed;
@@ -6,33 +7,35 @@ const DialogOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 `;
 
 const DialogContainer = styled.div`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #E6E9EF;
-  border-radius: 16px;
-  box-shadow: 8px 8px 16px #c3c6cc,
-              -8px -8px 16px #ffffff;
-  z-index: 1000;
+  width: 700px;
+  max-width: 90%;
+  background-color: #E6E9EF;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `;
 
 const DialogHeader = styled.div`
-  padding: 16px 24px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 `;
 
 const DialogTitle = styled.h3`
   margin: 0;
+  font-size: 18px;
   color: #333;
 `;
 
@@ -42,53 +45,51 @@ const CloseButton = styled.button`
   font-size: 20px;
   cursor: pointer;
   color: #666;
-  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   
   &:hover {
-    color: #333;
+    background-color: rgba(0, 0, 0, 0.05);
   }
 `;
 
 export const DialogContent = styled.div`
-  padding: 24px;
-  background: #E6E9EF;
+  padding: 20px;
+  overflow-y: auto;
+  max-height: calc(80vh - 120px);
 `;
 
 export const DialogActions = styled.div`
+  padding: 16px 20px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  padding: 16px 24px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 `;
 
 interface DialogProps {
-  title?: string;
-  onClose?: () => void;
+  title: string;
+  onClose: () => void;
   children: React.ReactNode;
   className?: string;
 }
 
-export const Dialog: React.FC<DialogProps> = ({ 
-  title, 
-  onClose, 
-  children,
-  className 
-}) => {
+export const Dialog: React.FC<DialogProps> = ({ title, onClose, children, className }) => {
   return (
-    <>
-      <DialogOverlay onClick={onClose} />
+    <DialogOverlay onClick={(e) => {
+      if (e.target === e.currentTarget) onClose();
+    }}>
       <DialogContainer className={className}>
-        {title && (
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            {onClose && (
-              <CloseButton onClick={onClose}>×</CloseButton>
-            )}
-          </DialogHeader>
-        )}
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <CloseButton onClick={onClose}>×</CloseButton>
+        </DialogHeader>
         {children}
       </DialogContainer>
-    </>
+    </DialogOverlay>
   );
 }; 

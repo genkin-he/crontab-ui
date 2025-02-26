@@ -5,16 +5,9 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  
-  svg {
-    color: #1890ff;
-    width: 14px;
-    height: 14px;
-  }
 `;
 
 const Preview = styled.div`
-  margin-top: 8px;
   padding: 8px;
   border-radius: 8px;
   background: #f5f5f5;

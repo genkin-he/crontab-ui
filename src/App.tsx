@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
-import { Container, Card, Button, Input, TextArea } from './components/neumorphic/styles';
+import { Card, Button, Input, TextArea } from './components/neumorphic/styles';
 import { ErrorMessage } from './components/neumorphic/ErrorMessage';
 import { Dialog, DialogContent, DialogActions } from './components/neumorphic/Dialog';
 import { JobHistory } from './components/JobHistory';
@@ -12,6 +12,14 @@ import styled from '@emotion/styled';
 import React from 'react';
 import { LogDialog } from './components/LogDialog';
 import { ScheduleDialog } from './components/ScheduleDialog';
+
+const StyledInput = styled(Input)`
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  background-color: #E6E9EF;
+  color: #333;
+`;
 
 interface CronJob {
   id: string;
@@ -28,6 +36,16 @@ interface JobHistoryEntry {
   output: string;
 }
 
+const AppContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  min-width: 800px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+`;
+
 const TaskList = styled.div`
   display: flex;
   flex-direction: column;
@@ -35,7 +53,7 @@ const TaskList = styled.div`
   margin-top: 20px;
   background-color: #E6E9EF;
   padding: 16px;
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: inset 4px 4px 8px #c3c6cc,
               inset -4px -4px 8px #ffffff;
 `;
@@ -91,7 +109,7 @@ const ActionButton = styled(Button)`
   padding: 8px 16px;
   font-size: 12px;
   margin-left: 8px;
-  border-radius: 20px;
+  border-radius: 8px;
   transition: all 0.3s ease;
   background: #f5f5f5;
   color: #666;
@@ -328,7 +346,7 @@ function App() {
   }
 
   return (
-    <Container>
+    <AppContainer>
       {missingPermissions.length > 0 && (
         <PermissionDialog
           missingPermissions={missingPermissions}
@@ -337,7 +355,7 @@ function App() {
       )}
       <Card>
         <div style={{ marginTop: '20px' }}>
-          <Input
+          <StyledInput
             placeholder="任务名称（选填）"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
@@ -438,7 +456,7 @@ function App() {
           onClose={() => setEditingJob(null)}
         >
           <DialogContent>
-            <Input
+            <StyledInput
               placeholder="任务名称（选填）"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
@@ -483,7 +501,11 @@ function App() {
             确定要删除这个任务吗？此操作不可恢复。
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowDeleteConfirm(null)}>取消</Button>
+            <Button
+              onClick={() => setShowDeleteConfirm(null)}
+            >
+              取消
+            </Button>
             <DeleteButton onClick={() => deleteCronJob(showDeleteConfirm)}>
               确认删除
             </DeleteButton>
@@ -497,7 +519,7 @@ function App() {
           onClose={() => setShowSchedule(null)}
         />
       )}
-    </Container>
+    </AppContainer>
   );
 }
 

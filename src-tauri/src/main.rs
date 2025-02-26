@@ -643,15 +643,18 @@ async fn get_next_runs(schedule: String) -> Result<Vec<String>, Error> {
         return Err(Error::CrontabError("Cron 表达式不能为空".to_string()));
     }
 
+    // 标准化表达式，确保字段数量正确
+    let parts: Vec<&str> = schedule.split_whitespace().collect();
+    if parts.len() != 5 {
+        return Err(Error::CrontabError("Cron 表达式必须包含5个字段：分钟 小时 日期 月份 星期".to_string()));
+    }
+
+    // 构建完整的 cron 表达式（添加秒字段）
+    let full_schedule = format!("0 {}", schedule);
+
     // 处理 */n 格式
     if schedule.contains("*/") {
         let now = Local::now();
-        let parts: Vec<&str> = schedule.split_whitespace().collect();
-        
-        if parts.len() != 5 {
-            return Err(Error::CrontabError("Cron 表达式必须包含5个字段".to_string()));
-        }
-        
         let mut next = now
             .with_second(0)  // 总是从0秒开始
             .unwrap();
@@ -779,7 +782,7 @@ async fn get_next_runs(schedule: String) -> Result<Vec<String>, Error> {
     }
 
     // 处理标准 cron 表达式
-    let parsed_schedule = Schedule::from_str(&schedule)
+    let parsed_schedule = Schedule::from_str(&full_schedule)
         .map_err(|e| Error::CrontabError(format!("无效的 cron 表达式 '{}': {}", &schedule, e)))?;
     
     let next_runs: Vec<String> = parsed_schedule
