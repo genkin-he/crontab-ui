@@ -3,7 +3,6 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Card, Button, Input, TextArea } from './components/neumorphic/styles';
 import { ErrorMessage } from './components/neumorphic/ErrorMessage';
 import { Dialog, DialogContent, DialogActions } from './components/neumorphic/Dialog';
-import { JobHistory } from './components/JobHistory';
 import { PermissionDialog } from './components/PermissionDialog';
 import { CronInput } from './components/CronInput';
 import { CronDescription } from './components/CronDescription';
@@ -182,10 +181,8 @@ function App() {
   const [editingJob, setEditingJob] = useState<CronJob | null>(null);
   const [editSchedule, setEditSchedule] = useState('');
   const [editCommand, setEditCommand] = useState('');
-  const [selectedJobId] = useState<string | null>(null);
-  const [jobHistories] = useState<JobHistoryEntry[]>([]);
   const [missingPermissions, setMissingPermissions] = useState<string[]>([]);
-  const [logOutput, setLogOutput] = useState<{jobId: string, content: string} | null>(null);
+  const [logOutput, setLogOutput] = useState<{jobId: string, content: string, name?: string} | null>(null);
   const [editName, setEditName] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showSchedule, setShowSchedule] = useState<string | null>(null);
@@ -327,10 +324,10 @@ function App() {
     }
   }
 
-  async function handleViewLogs(jobId: string) {
+  async function handleViewLogs(jobId: string, name: string) {
     try {
       const logs = await invoke<string>('get_job_logs', { jobId });
-      setLogOutput({ jobId, content: logs });
+      setLogOutput({ jobId, content: logs, name });
     } catch (error) {
       console.error('Failed to load job logs:', error);
     }
@@ -339,9 +336,9 @@ function App() {
   async function testCronJob(command: string) {
     try {
       const output = await invoke<string>('test_cron_job', { command });
-      setLogOutput({ jobId: 'test', content: output });
+      setLogOutput({ jobId: 'test', content: output, name: '命令测试' });
     } catch (error) {
-      setLogOutput({ jobId: 'test', content: `错误: ${error}` });
+      setLogOutput({ jobId: 'test', content: `错误: ${error}`, name: '命令测试' });
     }
   }
 
@@ -424,7 +421,7 @@ function App() {
                   >
                     计划
                   </ActionButton>
-                  <ActionButton onClick={() => handleViewLogs(job.id)}>
+                  <ActionButton onClick={() => handleViewLogs(job.id, job.name || '未命名任务')}>
                     日志
                   </ActionButton>
                   <DeleteButton onClick={() => setShowDeleteConfirm(job.id)}>
@@ -434,15 +431,9 @@ function App() {
               </TaskCard>
               {logOutput && (
                 <LogDialog
-                  title={`${job.name || '未命名任务'} - 执行日志`}
+                  title={`${logOutput.name || '未命名任务'} - 执行日志`}
                   content={logOutput.content}
                   onClose={() => setLogOutput(null)}
-                />
-              )}
-              {selectedJobId === job.id && (
-                <JobHistory
-                  jobId={job.id}
-                  histories={jobHistories}
                 />
               )}
             </React.Fragment>

@@ -308,34 +308,37 @@ async fn delete_cron_job(id: String) -> Result<(), Error> {
         .map_err(|e| Error::DatabaseError(e.to_string()))?;
     
     if let Some(job) = jobs.into_iter().find(|j| j.id == id) {
-        // 获取当前 crontab 内容并移除指定任务
-        let current_crontab = Command::new("crontab")
-            .arg("-l")
-            .output()
-            .map_err(|e| Error::CrontabError(e.to_string()))?;
+        // 只有当任务处于激活状态时才更新系统 crontab
+        if job.is_active {
+            // 获取当前 crontab 内容并移除指定任务
+            let current_crontab = Command::new("crontab")
+                .arg("-l")
+                .output()
+                .map_err(|e| Error::CrontabError(e.to_string()))?;
 
-        let current_content = String::from_utf8_lossy(&current_crontab.stdout);
-        let mut new_content: Vec<String> = Vec::new();
-        let mut skip_lines = false;
-        
-        for line in current_content.lines() {
-            if line.contains(&format!("# JOB_ID:{}", job.id)) {
-                skip_lines = true;
-                continue;
-            }
+            let current_content = String::from_utf8_lossy(&current_crontab.stdout);
+            let mut new_content: Vec<String> = Vec::new();
+            let mut skip_lines = false;
             
-            if skip_lines {
-                if line.trim().is_empty() {
-                    skip_lines = false;
+            for line in current_content.lines() {
+                if line.contains(&format!("# JOB_ID:{}", job.id)) {
+                    skip_lines = true;
+                    continue;
                 }
-                continue;
+                
+                if skip_lines {
+                    if line.trim().is_empty() {
+                        skip_lines = false;
+                    }
+                    continue;
+                }
+                
+                new_content.push(line.to_string());
             }
-            
-            new_content.push(line.to_string());
-        }
 
-        // 更新 crontab 并重启服务
-        update_and_restart_crontab(&new_content.join("\n"))?;
+            // 更新 crontab 并重启服务
+            update_and_restart_crontab(&new_content.join("\n"))?;
+        }
         
         // 从数据库中删除任务
         DB.delete_job(&id)
