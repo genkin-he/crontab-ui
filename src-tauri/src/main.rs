@@ -114,16 +114,15 @@ fn validate_cron_expression(expression: &str) -> Result<(), Error> {
 
 // 验证命令
 fn validate_command(command: &str) -> Result<(), Error> {
+    // 检查命令是否为空
     if command.trim().is_empty() {
-        return Err(Error::InvalidCommand("Command cannot be empty".into()));
+        return Err(Error::InvalidCommand("Command cannot be empty".to_string()));
     }
     
-    // 检查危险命令
-    let dangerous_patterns = ["rm -rf", "mkfs", "> /", "dd"];
-    for pattern in dangerous_patterns {
-        if command.contains(pattern) {
-            return Err(Error::InvalidCommand("Potentially dangerous command detected".into()));
-        }
+    // 移除危险命令检测或仅保留极其危险的命令检测
+    // 例如，只检测删除根目录的命令
+    if command.contains("rm -rf /") {
+        return Err(Error::InvalidCommand("Extremely dangerous command detected".to_string()));
     }
     
     Ok(())
@@ -202,14 +201,23 @@ fn request_sudo_password() -> Result<(), Error> {
     // 使用 osascript 弹出密码输入框
     let script = r#"
         tell application "System Events"
-            display dialog "需要管理员权限来重启 crontab 服务" with title "权限请求" buttons {"取消", "确定"} default button "确定" with icon caution with hidden answer default answer ""
+            display dialog "需要管理员权限来管理 crontab 服务" with title "权限请求" buttons {"取消", "确定"} default button "确定" with icon caution with hidden answer default answer ""
             if button returned of result = "确定" then
-                do shell script "sudo -S -v" password text returned of result with administrator privileges
-                -- 延长 sudo 凭证的有效期（默认 15 分钟）
-                do shell script "sudo tee /etc/sudoers.d/crontab_manager > /dev/null << EOL
+                set pwd to text returned of result
+                
+                -- 延长 sudo 凭证的有效期（设置为 1440 分钟）
+                do shell script "sudo -S -v" password pwd with administrator privileges
+                do shell script "sudo -S tee /etc/sudoers.d/crontab_manager > /dev/null << EOL
+# 允许无密码执行 crontab 相关命令
 %admin ALL=(ALL) NOPASSWD: /bin/launchctl enable system/com.vix.cron
 %admin ALL=(ALL) NOPASSWD: /bin/launchctl kickstart -k system/com.vix.cron
-EOL" password text returned of result with administrator privileges
+
+# 设置 sudo 凭证缓存时间为 1440 分钟
+Defaults timestamp_timeout=1440
+EOL" password pwd with administrator privileges
+                
+                -- 确保权限正确
+                do shell script "sudo -S chmod 0440 /etc/sudoers.d/crontab_manager" password pwd with administrator privileges
             end if
         end tell
     "#;

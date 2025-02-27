@@ -37,16 +37,7 @@ export function validateCommand(command: string) {
     };
   }
 
-  const dangerousPatterns = ['rm -rf', 'mkfs', '> /', 'dd'];
-  for (const pattern of dangerousPatterns) {
-    if (command.includes(pattern)) {
-      return {
-        isValid: false,
-        message: '检测到危险命令'
-      };
-    }
-  }
-
+  // 完全禁用危险命令检测，所有非空命令都视为有效
   return {
     isValid: true,
     message: ''

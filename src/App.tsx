@@ -28,7 +28,8 @@ interface CronJob {
   is_active: boolean;
 }
 
-interface JobHistoryEntry {
+// 暂时未使用，但将来可能会用到
+export interface JobHistoryEntry {
   id: string;
   execution_time: string;
   status: 'Success' | 'Failed';
